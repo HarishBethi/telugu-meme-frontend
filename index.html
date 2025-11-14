@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Telugu Meme Generator</title>
+
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #0b0f19;
+        color: #fff;
+    }
+    header {
+        padding: 20px;
+        text-align: center;
+        background: #111726;
+        font-size: 22px;
+        font-weight: bold;
+    }
+    .container {
+        display: flex;
+        gap: 20px;
+        padding: 20px;
+    }
+    .templates {
+        width: 30%;
+        max-height: 90vh;
+        overflow-y: auto;
+        background: #121a2c;
+        padding: 15px;
+        border-radius: 10px;
+    }
+    .template-item {
+        background: #1a2438;
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        cursor: pointer;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        border: 1px solid #26324a;
+    }
+    .template-item img {
+        width: 70px;
+        height: 70px;
+        border-radius: 6px;
+        object-fit: cover;
+    }
+    .canvas-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+        background: #121a2c;
+        padding: 20px;
+        border-radius: 10px;
+    }
+    canvas {
+        max-width: 100%;
+        border-radius: 10px;
+        background: #000;
+    }
+    .inputs {
+        display: flex;
+        gap: 10px;
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    input {
+        padding: 10px;
+        border-radius: 8px;
+        border: none;
+        width: 40%;
+        min-width: 200px;
+        font-size: 16px;
+    }
+    button {
+        padding: 12px 20px;
+        border: none;
+        border-radius: 8px;
+        background: #ff675c;
+        color: #000;
+        font-weight: bold;
+        cursor: pointer;
+        font-size: 18px;
+    }
+    button:hover {
+        background: #ff8e82;
+    }
+
+    @media(max-width: 900px) {
+        .container {
+            flex-direction: column;
+        }
+        .templates {
+            width: 100%;
+            max-height: 300px;
+        }
+    }
+</style>
+</head>
+
+<body>
+<header>Telugu Meme Generator</header>
+
+<div class="container">
+
+    <!-- Templates List -->
+    <div class="templates" id="templates">
+        <p>Loading templates...</p>
+    </div>
+
+    <!-- Canvas Area -->
+    <div class="canvas-area">
+        <canvas id="memeCanvas" width="600" height="600"></canvas>
+
+        <div class="inputs">
+            <input type="text" id="topText" placeholder="Top text" />
+            <input type="text" id="bottomText" placeholder="Bottom text" />
+        </div>
+
+        <button id="downloadBtn">Download Meme</button>
+    </div>
+</div>
+
+<script>
+const BACKEND = "https://telugu-meme-backend-go.onrender.com";
+const templatesEl = document.getElementById("templates");
+const canvas = document.getElementById("memeCanvas");
+const ctx = canvas.getContext("2d");
+let selectedImage = null;
+
+// Load Templates
+async function loadTemplates() {
+    const res = await fetch(`${BACKEND}/templates`);
+    const data = await res.json();
+
+    templatesEl.innerHTML = "";
+
+    data.forEach(tpl => {
+        const div = document.createElement("div");
+        div.className = "template-item";
+        div.innerHTML = `
+            <img src="${tpl.url}" alt="${tpl.name}" />
+            <div>${tpl.name}</div>
+        `;
+        div.onclick = () => selectTemplate(tpl.url);
+        templatesEl.appendChild(div);
+    });
+}
+
+function selectTemplate(url) {
+    selectedImage = new Image();
+    selectedImage.crossOrigin = "anonymous";
+    selectedImage.onload = () => drawMeme();
+    selectedImage.src = url;
+}
+
+function drawMeme() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (selectedImage) {
+        ctx.drawImage(selectedImage, 0, 0, canvas.width, canvas.height);
+    }
+
+    let top = document.getElementById("topText").value.toUpperCase();
+    let bottom = document.getElementById("bottomText").value.toUpperCase();
+
+    ctx.font = "40px Impact";
+    ctx.fillStyle = "white";
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 5;
+    ctx.textAlign = "center";
+
+    ctx.strokeText(top, canvas.width / 2, 50);
+    ctx.fillText(top, canvas.width / 2, 50);
+
+    ctx.strokeText(bottom, canvas.width / 2, canvas.height - 20);
+    ctx.fillText(bottom, canvas.width / 2, canvas.height - 20);
+}
+
+document.getElementById("topText").oninput = drawMeme;
+document.getElementById("bottomText").oninput = drawMeme;
+
+document.getElementById("downloadBtn").onclick = () => {
+    const link = document.createElement("a");
+    link.download = "meme.png";
+    link.href = canvas.toDataURL();
+    link.click();
+};
+
+loadTemplates();
+</script>
+
+</body>
+</html>
